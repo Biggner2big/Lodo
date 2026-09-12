@@ -18,6 +18,7 @@ const MIME = {
 // Allowlist of public production files
 const ALLOWED_FILES = new Set([
   'final lodo.html',
+  'index.html',
   'config.js'
 ]);
 
