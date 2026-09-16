@@ -17,7 +17,6 @@ const MIME = {
 
 // Allowlist of public production files
 const ALLOWED_FILES = new Set([
-  'final lodo.html',
   'index.html',
   'config.js'
 ]);
@@ -51,8 +50,8 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Normalize route: '/' maps to 'final lodo.html'
-  let relativePath = decodedPath === '/' ? 'final lodo.html' : decodedPath.replace(/^\/+/, '');
+  // Normalize route: '/' maps to 'index.html'
+  let relativePath = decodedPath === '/' ? 'index.html' : decodedPath.replace(/^\/+/, '');
   const baseName = path.basename(relativePath).toLowerCase();
 
   // Strict allowlist: only explicitly allowed files

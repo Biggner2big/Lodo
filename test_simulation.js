@@ -6,10 +6,10 @@ const path = require('path');
 console.log("=== RUNNING FULL CODEBASE & RUNTIME AUDIT ===");
 
 // 1. Check HTML and config.js existence and syntax
-const htmlPath = path.join(__dirname, 'final lodo.html');
+const htmlPath = path.join(__dirname, 'index.html');
 const configPath = path.join(__dirname, 'config.js');
 
-if (!fs.existsSync(htmlPath)) throw new Error("final lodo.html missing!");
+if (!fs.existsSync(htmlPath)) throw new Error("index.html missing!");
 if (!fs.existsSync(configPath)) throw new Error("config.js missing!");
 
 const htmlContent = fs.readFileSync(htmlPath, 'utf8');
