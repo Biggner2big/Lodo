@@ -3354,8 +3354,8 @@
       <button class="game-bar-btn" id="btnLeave" title="Leave Game">🚪</button>
       <div class="turn-label" id="turnLabel">● YOUR TURN</div>
       <div class="game-top-actions">
-        <button class="game-bar-btn voice-btn disabled" id="btnMic" title="Microphone (Mute/Unmute)">🎙️</button>
-        <button class="game-bar-btn voice-btn disabled" id="btnSpeaker" title="Speaker (Deafen/Undeafen)">🔊</button>
+        <button class="game-bar-btn voice-btn muted" id="btnMic" title="Microphone: MUTED (Click to Unmute)">🔇</button>
+        <button class="game-bar-btn voice-btn active" id="btnSpeaker" title="Speaker: ON (Click to Deafen)">🔊</button>
         <button class="game-bar-btn" id="btnChat" title="Chat">💬<span class="ctrl-badge hidden" id="chatBadge">0</span></button>
       </div>
     </div>
@@ -5848,13 +5848,28 @@
       iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' }
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' },
+        { urls: 'stun:stun4.l.google.com:19302' }
       ],
       isSupported: !!(window.RTCPeerConnection && navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
 
       init() {
         this.updateTopBarUI();
         this.attachButtonHandlers();
+        document.addEventListener('click', () => this.unlockAudio(), { passive: true });
+        document.addEventListener('touchstart', () => this.unlockAudio(), { passive: true });
+      },
+
+      unlockAudio() {
+        if (this.audioContext && this.audioContext.state === 'suspended') {
+          try { this.audioContext.resume(); } catch (e) { }
+        }
+        Object.values(this.peerAudioElems).forEach(elem => {
+          if (elem && elem.paused && this.isSpeakerOn) {
+            try { elem.play().catch(() => { }); } catch (e) { }
+          }
+        });
       },
 
       attachButtonHandlers() {
@@ -5879,16 +5894,6 @@
         const btnMic = $('btnMic');
         const btnSpeaker = $('btnSpeaker');
         if (!btnMic || !btnSpeaker) return;
-
-        if (!this.isSupported || CURRENT_MODE !== 'online' || !GAME_STARTED) {
-          btnMic.classList.add('disabled');
-          btnSpeaker.classList.add('disabled');
-          btnMic.title = 'Voice Chat (Online Match Only)';
-          btnSpeaker.title = 'Voice Chat (Online Match Only)';
-          btnMic.innerHTML = '🎙️';
-          btnSpeaker.innerHTML = '🔊';
-          return;
-        }
 
         btnMic.classList.remove('disabled');
         btnSpeaker.classList.remove('disabled');
@@ -5916,6 +5921,10 @@
 
       async getOrCreateLocalStream() {
         if (this.localStream) return this.localStream;
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          toast('Microphone access requires HTTPS or localhost (Secure Context)');
+          return null;
+        }
         try {
           const stream = await navigator.mediaDevices.getUserMedia({
             audio: {
@@ -5930,7 +5939,11 @@
           return stream;
         } catch (err) {
           console.warn('[VoiceChat] getUserMedia error:', err);
-          toast('Microphone access denied or unavailable');
+          if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+            toast('Microphone permission blocked. Please allow mic in browser settings.');
+          } else {
+            toast('Microphone unavailable or not detected.');
+          }
           return null;
         }
       },
@@ -5943,7 +5956,7 @@
             this.audioContext = new AudioContextClass();
           }
           if (this.audioContext.state === 'suspended') {
-            this.audioContext.resume();
+            this.audioContext.resume().catch(() => { });
           }
           const source = this.audioContext.createMediaStreamSource(stream);
           this.analyser = this.audioContext.createAnalyser();
@@ -6012,10 +6025,6 @@
       },
 
       async toggleMic() {
-        if (CURRENT_MODE !== 'online' || !GAME_STARTED) {
-          toast('Voice chat is available in Online Multiplayer');
-          return;
-        }
         if (!this.isSupported) {
           toast('Voice chat is not supported on this browser');
           return;
@@ -6027,26 +6036,29 @@
         }
 
         this.isMicOn = !this.isMicOn;
-        if (this.localStream) {
-          this.localStream.getAudioTracks().forEach(track => {
-            track.enabled = this.isMicOn;
-          });
+        const audioTrack = (this.localStream && this.localStream.getAudioTracks().length > 0)
+          ? this.localStream.getAudioTracks()[0] : null;
+
+        if (audioTrack) {
+          audioTrack.enabled = this.isMicOn;
         }
 
-        if (this.isMicOn && this.localStream) {
-          const audioTrack = this.localStream.getAudioTracks()[0];
-          if (audioTrack) {
-            Object.values(this.peerConnections).forEach(pc => {
-              const senders = pc.getSenders ? pc.getSenders() : [];
-              const hasAudioSender = senders.some(s => s.track && s.track.kind === 'audio');
-              if (!hasAudioSender) {
-                try { pc.addTrack(audioTrack, this.localStream); } catch (e) { }
-              }
-            });
+        // Apply replaceTrack across all peer connections seamlessly in online mode
+        for (const pc of Object.values(this.peerConnections)) {
+          const senders = pc.getSenders ? pc.getSenders() : [];
+          const audioSender = senders.find(s => s.track?.kind === 'audio' || !s.track);
+          if (audioSender && audioSender.replaceTrack) {
+            try {
+              await audioSender.replaceTrack(this.isMicOn ? audioTrack : null);
+            } catch (e) {
+              console.warn('[VoiceChat] replaceTrack error:', e);
+            }
+          } else if (audioTrack) {
+            try { pc.addTrack(audioTrack, this.localStream); } catch (e) { }
           }
         }
 
-        if (roomChannel) {
+        if (roomChannel && CURRENT_MODE === 'online') {
           try {
             roomChannel.send({
               type: 'broadcast',
@@ -6058,14 +6070,10 @@
 
         this.updateTopBarUI();
         this.syncMuteButtons(G ? G.activeColors : ALL_COLORS);
-        toast(this.isMicOn ? '🎙️ Mic Unmuted' : '🔇 Mic Muted');
+        toast(this.isMicOn ? '🎙️ Mic ON (You are live)' : '🔇 Mic Muted');
       },
 
       toggleSpeaker() {
-        if (CURRENT_MODE !== 'online' || !GAME_STARTED) {
-          toast('Voice chat is available in Online Multiplayer');
-          return;
-        }
         this.isSpeakerOn = !this.isSpeakerOn;
         this.applySpeakerState();
         this.updateTopBarUI();
@@ -6076,6 +6084,9 @@
         Object.entries(this.peerAudioElems).forEach(([peerId, audioElem]) => {
           const isPeerMuted = this.mutedPeers.has(peerId);
           audioElem.muted = !this.isSpeakerOn || isPeerMuted;
+          if (!audioElem.muted && audioElem.paused) {
+            try { audioElem.play().catch(() => { }); } catch (e) { }
+          }
         });
       },
 
@@ -6086,6 +6097,10 @@
         }
         const peerId = this.colorToPeerId[color];
         const btn = $(`mute_btn_${color}`);
+        if (!peerId && CURRENT_MODE !== 'online') {
+          toast(`${G?.players[color]?.name || color} is a local player`);
+          return;
+        }
         if (!peerId) {
           toast(`Player is connecting to voice…`);
           return;
@@ -6094,7 +6109,10 @@
         if (this.mutedPeers.has(peerId)) {
           this.mutedPeers.delete(peerId);
           const audioElem = this.peerAudioElems[peerId];
-          if (audioElem) audioElem.muted = !this.isSpeakerOn;
+          if (audioElem) {
+            audioElem.muted = !this.isSpeakerOn;
+            if (!audioElem.muted) audioElem.play().catch(() => { });
+          }
           if (btn) {
             btn.classList.remove('muted');
             btn.innerHTML = '🔊';
@@ -6118,19 +6136,21 @@
         ALL_COLORS.forEach(c => {
           const btn = $(`mute_btn_${c}`);
           if (!btn) return;
-          if (CURRENT_MODE === 'online' && GAME_STARTED && activeColors && activeColors.includes(c)) {
+          if (GAME_STARTED && activeColors && activeColors.includes(c)) {
             if (c === MY_COLOR) {
               btn.classList.remove('hidden');
               btn.innerHTML = this.isMicOn ? '🎙️' : '🔇';
               btn.className = 'hud-mute-btn' + (this.isMicOn ? '' : ' muted');
               btn.title = this.isMicOn ? 'Microphone: ON (Click to Mute)' : 'Microphone: MUTED (Click to Unmute)';
-            } else {
+            } else if (CURRENT_MODE === 'online') {
               const peerId = this.colorToPeerId[c];
               btn.classList.remove('hidden');
               const isPeerMuted = peerId ? this.mutedPeers.has(peerId) : false;
               btn.innerHTML = isPeerMuted ? '🔇' : '🔊';
               btn.className = 'hud-mute-btn' + (isPeerMuted ? ' muted' : '');
               btn.title = isPeerMuted ? `Unmute ${G?.players[c]?.name || c}` : `Mute ${G?.players[c]?.name || c}`;
+            } else {
+              btn.classList.add('hidden');
             }
           } else {
             btn.classList.add('hidden');
@@ -6163,10 +6183,14 @@
       getOrCreatePeerConnection(peerId) {
         if (this.peerConnections[peerId]) return this.peerConnections[peerId];
 
-        const pc = new RTCPeerConnection({ iceServers: this.iceServers });
+        const pc = new RTCPeerConnection({
+          iceServers: this.iceServers,
+          sdpSemantics: 'unified-plan'
+        });
         this.peerConnections[peerId] = pc;
 
-        if (this.localStream) {
+        // Add transceiver for audio
+        if (this.localStream && this.isMicOn) {
           this.localStream.getAudioTracks().forEach(track => {
             try { pc.addTrack(track, this.localStream); } catch (e) { }
           });
@@ -6187,16 +6211,20 @@
         };
 
         pc.ontrack = (event) => {
+          console.log('[VoiceChat] ontrack received stream from', peerId);
           let audioElem = this.peerAudioElems[peerId];
           if (!audioElem) {
             audioElem = document.createElement('audio');
             audioElem.autoplay = true;
             audioElem.playsInline = true;
+            audioElem.volume = 1.0;
             document.body.appendChild(audioElem);
             this.peerAudioElems[peerId] = audioElem;
           }
-          audioElem.srcObject = event.streams[0] || new MediaStream([event.track]);
+          const stream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
+          audioElem.srcObject = stream;
           audioElem.muted = !this.isSpeakerOn || this.mutedPeers.has(peerId);
+          audioElem.play().catch(() => { });
         };
 
         pc.onconnectionstatechange = () => {
@@ -6214,7 +6242,7 @@
 
         const pc = this.getOrCreatePeerConnection(peerId);
         try {
-          const offer = await pc.createOffer();
+          const offer = await pc.createOffer({ offerToReceiveAudio: true });
           await pc.setLocalDescription(offer);
           if (roomChannel) {
             roomChannel.send({
@@ -6235,6 +6263,9 @@
         if (payload.type === 'offer' && payload.sdp) {
           const pc = this.getOrCreatePeerConnection(peerId);
           try {
+            if (pc.signalingState !== 'stable') {
+              try { await pc.setLocalDescription({ type: 'rollback' }); } catch (e) { }
+            }
             await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
             if (this.pendingCandidates[peerId]) {
               for (const cand of this.pendingCandidates[peerId]) {
