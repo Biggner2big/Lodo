@@ -1,7 +1,6 @@
 {
   "version": 2,
   "cleanUrls": true,
-  "buildCommand": "node build.js",
   "rewrites": [
     { "source": "/", "destination": "/index.html" },
     { "source": "/final%20lodo.html", "destination": "/index.html" },
