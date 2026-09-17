@@ -758,7 +758,8 @@
       z-index: 10;
       min-height: 44px;
       flex-shrink: 0;
-      overflow: hidden;
+      /* Keep the complete dice station (including its result badge) visible on narrow screens. */
+      overflow: visible;
     }
 
     .player-hud-row.single-player {
@@ -832,6 +833,129 @@
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+    }
+
+    /* ============ RESPONSIVE GAME HUD ============
+       The game is designed around a square board. HUD rows therefore consume only
+       their natural height and the board gets the remaining viewport space. This
+       prevents mobile flex-shrink from collapsing the dice station. */
+    #game {
+      min-height: 0;
+      width: min(100%, 480px);
+      height: 100dvh;
+    }
+
+    #game > .player-hud-row {
+      flex: 0 0 auto;
+      min-height: 50px;
+      overflow: visible;
+    }
+
+    #game .player-card {
+      min-height: 44px;
+      overflow: visible;
+    }
+
+    #game .dice-station {
+      flex: 0 0 auto;
+      min-width: 38px;
+      min-height: 38px;
+      visibility: visible;
+      opacity: 1;
+      z-index: 3;
+    }
+
+    #game .dice-tray {
+      flex: 0 0 auto;
+      visibility: visible;
+      touch-action: manipulation;
+    }
+
+    #game .board-area {
+      flex: 1 1 0;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    @media (max-width: 380px) {
+      #game > .player-hud-row {
+        gap: 3px;
+        padding-left: 4px;
+        padding-right: 4px;
+      }
+
+      #game .player-card {
+        gap: 2px;
+        padding-left: 3px;
+        padding-right: 3px;
+      }
+
+      #game .avatar-wrap {
+        width: 30px;
+        height: 30px;
+      }
+
+      #game .avatar-disc {
+        width: 23px;
+        height: 23px;
+        font-size: 13px;
+      }
+
+      #game .dice-tray {
+        width: 36px;
+        height: 36px;
+      }
+
+      #game .dice-cube {
+        width: 22px;
+        height: 22px;
+      }
+
+      #game .cube-face.f-1,
+      #game .cube-face.f-6,
+      #game .cube-face.f-2,
+      #game .cube-face.f-5,
+      #game .cube-face.f-3,
+      #game .cube-face.f-4 {
+        transform: translateZ(9px);
+      }
+
+      #game .cube-face.f-6 { transform: rotateY(180deg) translateZ(9px); }
+      #game .cube-face.f-2 { transform: rotateY(90deg) translateZ(9px); }
+      #game .cube-face.f-5 { transform: rotateY(-90deg) translateZ(9px); }
+      #game .cube-face.f-3 { transform: rotateX(90deg) translateZ(9px); }
+      #game .cube-face.f-4 { transform: rotateX(-90deg) translateZ(9px); }
+
+      #game .dice-badge {
+        width: 22px;
+        height: 22px;
+        right: calc(100% + 2px);
+        font-size: 13px;
+      }
+
+      #game .player-details .pname {
+        font-size: 10px;
+      }
+    }
+
+    @media (max-height: 620px) {
+      #game > .player-hud-row {
+        min-height: 44px;
+      }
+
+      #game .player-card {
+        min-height: 40px;
+      }
+
+      #game .game-top-bar {
+        padding-top: 2px;
+        padding-bottom: 2px;
+      }
+
+      #game .game-bar-btn {
+        width: 32px;
+        height: 32px;
+      }
     }
 
     .timer-svg {
@@ -2748,10 +2872,12 @@
     <div class="card" style="max-width:360px">
       <div style="font-size:36px;margin-bottom:6px">🔑</div>
       <h2>Join Online Room</h2>
-      <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px">Enter 5-digit Room Code</p>
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px">Enter the 4-digit Room Code</p>
       <div class="field">
-        <input id="roomCodeInput" maxlength="6" placeholder="e.g. RD482"
-          style="text-align:center;font-size:22px;letter-spacing:4px;text-transform:uppercase;font-weight:900">
+        <input id="roomCodeInput" maxlength="4" inputmode="numeric" autocomplete="one-time-code"
+          pattern="[0-9]{4}" placeholder="e.g. 4827"
+          aria-label="4-digit room code"
+          style="text-align:center;font-size:22px;letter-spacing:6px;text-transform:uppercase;font-weight:900">
       </div>
       <div class="ch-actions" style="margin-top:14px">
         <button class="btn btn-secondary" id="btnCancelJoinRoom">Cancel</button>
@@ -3626,6 +3752,18 @@
         Math.random().toString(36).slice(2, 6);
     }
 
+    function generateRoomCode() {
+      return String(Math.floor(1000 + Math.random() * 9000));
+    }
+
+    function normalizeRoomCode(value) {
+      return String(value || '').replace(/\D/g, '').slice(0, 4);
+    }
+
+    function isValidRoomCode(value) {
+      return /^\d{4}$/.test(value);
+    }
+
     function getColorsForCount(count) {
       if (count === 2) return ['red', 'yellow'];
       if (count === 3) return ['red', 'green', 'yellow'];
@@ -4421,7 +4559,7 @@
       $('waitSub').textContent = 'Waiting for ' + name + ' to accept…';
       $('waitOverlay').classList.remove('hidden');
 
-      const code = ('RD' + Math.random().toString(36).slice(2, 8)).toUpperCase();
+      const code = generateRoomCode();
       CURRENT_ROOM_CODE = code;
       ROOM_PLAYER_COUNT = 2;
       IS_HOST = true;
@@ -4549,7 +4687,7 @@
     /* ============ ONLINE ROOM CREATION & LOBBY ============ */
     function createOnlineRoom(count = 2) {
       Sound.init(); Sound.click();
-      const code = ('RD' + Math.random().toString(36).slice(2, 8)).toUpperCase();
+      const code = generateRoomCode();
       CURRENT_ROOM_CODE = code;
       ROOM_PLAYER_COUNT = count;
       IS_HOST = true;
@@ -4570,9 +4708,9 @@
 
     function joinOnlineRoom(code) {
       Sound.init(); Sound.click();
-      const cleanCode = (code || '').trim().toUpperCase();
-      if (!cleanCode || cleanCode.length < 3) {
-        toast('Please enter a valid room code');
+      const cleanCode = normalizeRoomCode(code);
+      if (!isValidRoomCode(cleanCode)) {
+        toast('Room code must be exactly 4 digits');
         return;
       }
       CURRENT_ROOM_CODE = cleanCode;
@@ -4909,11 +5047,19 @@
     };
     $('btnCancelJoinRoom').onclick = () => $('joinRoomModal').classList.add('hidden');
     $('btnConfirmJoinRoom').onclick = () => {
-      const code = $('roomCodeInput').value.trim();
-      if (!code) { toast('Please enter a room code'); return; }
+      const code = normalizeRoomCode($('roomCodeInput').value);
+      $('roomCodeInput').value = code;
+      if (!isValidRoomCode(code)) { toast('Enter exactly 4 digits'); return; }
       $('joinRoomModal').classList.add('hidden');
       joinOnlineRoom(code);
     };
+
+    $('roomCodeInput').addEventListener('input', e => {
+      e.target.value = normalizeRoomCode(e.target.value);
+    });
+    $('roomCodeInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') $('btnConfirmJoinRoom').click();
+    });
 
     $('btnCopyRoomCode').onclick = () => {
       if (!CURRENT_ROOM_CODE) return;
