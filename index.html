@@ -5892,13 +5892,34 @@
       iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' }
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' },
+        { urls: 'stun:stun4.l.google.com:19302' },
+        { urls: 'stun:global.stun.twilio.com:3478' }
       ],
       isSupported: !!(window.RTCPeerConnection && navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
 
       init() {
         this.updateTopBarUI();
         this.attachButtonHandlers();
+        this.setupGlobalAudioUnlock();
+      },
+
+      setupGlobalAudioUnlock() {
+        const unlock = () => this.unlockAudio();
+        document.addEventListener('click', unlock, { passive: true });
+        document.addEventListener('touchstart', unlock, { passive: true });
+      },
+
+      unlockAudio() {
+        if (this.audioContext && this.audioContext.state === 'suspended') {
+          this.audioContext.resume().catch(() => { });
+        }
+        Object.values(this.peerAudioElems).forEach(elem => {
+          if (elem && elem.paused && !elem.muted) {
+            elem.play().catch(() => { });
+          }
+        });
       },
 
       attachButtonHandlers() {
@@ -6203,6 +6224,20 @@
           });
         }
 
+        if (members && Array.isArray(members)) {
+          members.forEach(m => {
+            if (m && m.id && m.id !== PLAYER_ID) {
+              if (!this.peerColors[m.id] && activeColors) {
+                const available = activeColors.find(c => !this.colorToPeerId[c] && c !== MY_COLOR);
+                if (available) {
+                  this.peerColors[m.id] = available;
+                  this.colorToPeerId[available] = m.id;
+                }
+              }
+            }
+          });
+        }
+
         this.syncMuteButtons(activeColors || ALL_COLORS);
 
         // Initiate connection to peers if offerer
@@ -6214,7 +6249,10 @@
       getOrCreatePeerConnection(peerId) {
         if (this.peerConnections[peerId]) return this.peerConnections[peerId];
 
-        const pc = new RTCPeerConnection({ iceServers: this.iceServers });
+        const pc = new RTCPeerConnection({
+          iceServers: this.iceServers,
+          sdpSemantics: 'unified-plan'
+        });
         this.peerConnections[peerId] = pc;
 
         if (this.localStream) {
@@ -6238,20 +6276,30 @@
         };
 
         pc.ontrack = (event) => {
+          console.log('[VoiceChat] ontrack received stream from', peerId, event);
           let audioElem = this.peerAudioElems[peerId];
           if (!audioElem) {
             audioElem = document.createElement('audio');
             audioElem.autoplay = true;
             audioElem.playsInline = true;
+            audioElem.volume = 1.0;
+            audioElem.style.display = 'none';
             document.body.appendChild(audioElem);
             this.peerAudioElems[peerId] = audioElem;
           }
-          audioElem.srcObject = event.streams[0] || new MediaStream([event.track]);
+          const stream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
+          audioElem.srcObject = stream;
           audioElem.muted = !this.isSpeakerOn || this.mutedPeers.has(peerId);
+          audioElem.play().catch(err => {
+            console.warn('[VoiceChat] Autoplay restricted until interaction:', err);
+          });
         };
 
         pc.onconnectionstatechange = () => {
-          if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+          console.log('[VoiceChat] Connection state with', peerId, ':', pc.connectionState);
+          if (pc.connectionState === 'failed') {
+            try { pc.restartIce(); } catch (e) { }
+          } else if (pc.connectionState === 'closed') {
             this.closePeer(peerId);
           }
         };
@@ -6265,7 +6313,7 @@
 
         const pc = this.getOrCreatePeerConnection(peerId);
         try {
-          const offer = await pc.createOffer();
+          const offer = await pc.createOffer({ offerToReceiveAudio: true });
           await pc.setLocalDescription(offer);
           if (roomChannel) {
             roomChannel.send({
@@ -6286,6 +6334,9 @@
         if (payload.type === 'offer' && payload.sdp) {
           const pc = this.getOrCreatePeerConnection(peerId);
           try {
+            if (pc.signalingState !== 'stable') {
+              try { await pc.setLocalDescription({ type: 'rollback' }); } catch (e) { }
+            }
             await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
             if (this.pendingCandidates[peerId]) {
               for (const cand of this.pendingCandidates[peerId]) {
