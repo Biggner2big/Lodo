@@ -3361,6 +3361,15 @@
     const SUPABASE_KEY = config.SUPABASE_ANON_KEY || '';
     let supa = null;
 
+    if (!config.IS_CONFIGURED) {
+      console.error('Supabase not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.');
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:#0a0214;display:flex;align-items:center;justify-content:center;z-index:9999;color:#fff;font-family:sans-serif;padding:20px;text-align:center;';
+      overlay.innerHTML = '<div><h2>Configuration Error</h2><p>Supabase credentials not configured.<br>Set <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> environment variables.</p></div>';
+      document.body.appendChild(overlay);
+      throw new Error('Supabase not configured');
+    }
+
     if (SUPABASE_URL && SUPABASE_KEY && window.supabase) {
       try {
         supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
@@ -4394,7 +4403,8 @@
       $('waitSub').textContent = 'Waiting for ' + name + ' to accept…';
       $('waitOverlay').classList.remove('hidden');
 
-      const code = ('RD' + Math.floor(100 + Math.random() * 900)).toUpperCase();
+      // 6 random alphanumeric chars → ~2.2B combinations, not brute-forceable
+      const code = ('RD' + Math.random().toString(36).slice(2, 8)).toUpperCase();
       try {
         lobbyChannel.send({
           type: 'broadcast', event: 'challenge',
@@ -4450,7 +4460,7 @@
     /* ============ ONLINE ROOM CREATION & LOBBY ============ */
     function createOnlineRoom(count = 2) {
       Sound.init(); Sound.click();
-      const code = ('RD' + Math.floor(100 + Math.random() * 900)).toUpperCase();
+      const code = ('RD' + Math.random().toString(36).slice(2, 8)).toUpperCase();
       CURRENT_ROOM_CODE = code;
       ROOM_PLAYER_COUNT = count;
       IS_HOST = true;
