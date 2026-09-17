@@ -697,15 +697,18 @@
 
     /* ============ GAME SCREEN ============ */
     #game {
+      position: fixed;
+      inset: 0;
       display: grid;
       grid-template-rows: auto auto minmax(0, 1fr) auto;
+      grid-template-columns: minmax(0, 1fr);
       height: 100dvh;
       max-width: 540px;
       margin: 0 auto;
       width: 100%;
       overflow: hidden;
-      position: relative;
       z-index: 2;
+      box-sizing: border-box;
     }
 
     .conn-banner {
@@ -743,11 +746,22 @@
       justify-content: space-between;
       gap: 6px;
       padding: 3px 6px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
       background: linear-gradient(180deg, rgba(25, 12, 45, 0.92) 0%, rgba(15, 6, 30, 0.92) 100%);
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
       position: relative;
       z-index: 10;
       min-height: 48px;
+    }
+
+    .player-hud-row.single-player {
+      justify-content: center;
+    }
+
+    .player-hud-row.single-player .player-card {
+      max-width: 440px;
     }
 
     .player-hud-row.top {
@@ -761,7 +775,7 @@
     }
 
     .player-card {
-      flex: 1;
+      flex: 1 1 0;
       min-width: 0;
       max-width: 250px;
       display: flex;
@@ -775,6 +789,7 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
       position: relative;
       overflow: hidden;
+      box-sizing: border-box;
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
@@ -1313,19 +1328,24 @@
 
     /* ============ BOARD AREA ============ */
     .board-area {
-      display: grid;
-      place-items: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 100%;
       padding: 2px;
       overflow: hidden;
       flex: 1;
-      min-height: 0
+      min-height: 0;
+      box-sizing: border-box;
     }
 
     .board {
       position: relative;
-      width: min(94vw, 94%, calc(100dvh - 180px));
+      width: min(94vw, 94%, calc(100dvh - 175px));
       aspect-ratio: 1/1;
       max-width: 460px;
+      margin: 0 auto;
       background:
         radial-gradient(circle at 50% 50%, rgba(255, 215, 140, 0.08), transparent 70%),
         linear-gradient(135deg, #7A4214 0%, #462309 45%, #6E380E 80%, #3B1B04 100%);
@@ -1336,6 +1356,7 @@
         inset 0 0 0 2.5px rgba(255, 225, 160, 0.35),
         inset 0 4px 10px rgba(255, 255, 255, 0.25),
         inset 0 -4px 10px rgba(0, 0, 0, 0.7);
+      box-sizing: border-box;
     }
 
     .board-svg {
@@ -2364,6 +2385,115 @@
 
       .board {
         width: min(92vw, 92%, calc(100dvh - 200px))
+      }
+    }
+
+    /* Mobile Phone Layout & HUD Scaling (Prevents off-center shifting in multiplayer) */
+    @media (max-width: 520px) {
+      .player-hud-row {
+        gap: 4px;
+        padding: 3px 5px;
+        min-height: 44px;
+      }
+
+      .player-card {
+        padding: 2px 4px;
+        gap: 3px;
+        border-radius: 12px;
+      }
+
+      .player-profile-side {
+        gap: 4px;
+        min-width: 0;
+      }
+
+      .avatar-wrap {
+        width: 36px;
+        height: 36px;
+      }
+
+      .avatar-disc {
+        width: 28px;
+        height: 28px;
+        font-size: 15px;
+      }
+
+      .avatar-online-dot {
+        width: 7px;
+        height: 7px;
+        right: 0px;
+        bottom: 0px;
+      }
+
+      .player-details .pname {
+        font-size: 11px;
+        max-width: 56px;
+      }
+
+      .home-meter {
+        gap: 2px;
+        margin-top: 1px;
+      }
+
+      .home-crown {
+        width: 10px;
+        height: 10px;
+      }
+
+      .home-crown::before {
+        font-size: 8px;
+      }
+
+      .dice-station {
+        gap: 3px;
+      }
+
+      .dice-tray {
+        width: 38px;
+        height: 38px;
+        border-radius: 9px;
+      }
+
+      .dice-cube {
+        width: 26px;
+        height: 26px;
+      }
+
+      .cube-face {
+        width: 26px;
+        height: 26px;
+        border-radius: 5px;
+        padding: 2px;
+        gap: 1.5px;
+      }
+
+      .cube-face.f-1 { transform: rotateY(0deg) translateZ(13px); }
+      .cube-face.f-6 { transform: rotateY(180deg) translateZ(13px); }
+      .cube-face.f-2 { transform: rotateY(90deg) translateZ(13px); }
+      .cube-face.f-5 { transform: rotateY(-90deg) translateZ(13px); }
+      .cube-face.f-3 { transform: rotateX(90deg) translateZ(13px); }
+      .cube-face.f-4 { transform: rotateX(-90deg) translateZ(13px); }
+
+      .dice-badge {
+        width: 18px;
+        height: 18px;
+        font-size: 10px;
+        top: -4px;
+        right: -4px;
+      }
+
+      /* In multi-player rows (2 cards), hide the redundant text prompt to prevent horizontal row blowout */
+      .player-hud-row:not(.single-player) .player-hud-right {
+        display: none;
+      }
+
+      .player-hud-row.single-player .dice-prompt {
+        font-size: 8px;
+      }
+
+      .board {
+        width: min(94vw, calc(100dvh - 165px));
+        margin: 0 auto;
       }
     }
 
@@ -4255,6 +4385,15 @@
           card.style.setProperty('--player-accent', COLOR_HEX[c]?.main || '#F4C430');
         }
       });
+
+      if (topRow) {
+        const topVisible = Array.from(topRow.children).filter(el => !el.classList.contains('hidden'));
+        topRow.classList.toggle('single-player', topVisible.length === 1);
+      }
+      if (bottomRow) {
+        const botVisible = Array.from(bottomRow.children).filter(el => !el.classList.contains('hidden'));
+        bottomRow.classList.toggle('single-player', botVisible.length === 1);
+      }
 
       updateTurnUI();
     }
