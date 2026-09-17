@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport"
@@ -162,6 +163,7 @@
     }
 
     @keyframes crownBob {
+
       0%,
       100% {
         transform: translateY(0) scale(1)
@@ -727,6 +729,7 @@
     }
 
     @keyframes centerBob {
+
       0%,
       100% {
         transform: translate(-50%, -50%) scale(1)
@@ -907,7 +910,7 @@
       height: 100dvh;
     }
 
-    #game > .player-hud-row {
+    #game>.player-hud-row {
       flex: 0 0 auto;
       min-height: 50px;
       overflow: visible;
@@ -940,7 +943,7 @@
     }
 
     @media (max-width: 380px) {
-      #game > .player-hud-row {
+      #game>.player-hud-row {
         gap: 3px;
         padding-left: 4px;
         padding-right: 4px;
@@ -982,11 +985,25 @@
         transform: translateZ(10px);
       }
 
-      #game .cube-face.f-6 { transform: rotateY(180deg) translateZ(10px); }
-      #game .cube-face.f-2 { transform: rotateY(90deg) translateZ(10px); }
-      #game .cube-face.f-5 { transform: rotateY(-90deg) translateZ(10px); }
-      #game .cube-face.f-3 { transform: rotateX(90deg) translateZ(10px); }
-      #game .cube-face.f-4 { transform: rotateX(-90deg) translateZ(10px); }
+      #game .cube-face.f-6 {
+        transform: rotateY(180deg) translateZ(10px);
+      }
+
+      #game .cube-face.f-2 {
+        transform: rotateY(90deg) translateZ(10px);
+      }
+
+      #game .cube-face.f-5 {
+        transform: rotateY(-90deg) translateZ(10px);
+      }
+
+      #game .cube-face.f-3 {
+        transform: rotateX(90deg) translateZ(10px);
+      }
+
+      #game .cube-face.f-4 {
+        transform: rotateX(-90deg) translateZ(10px);
+      }
 
       #game .dice-badge {
         width: 24px;
@@ -1001,7 +1018,7 @@
     }
 
     @media (max-height: 620px) {
-      #game > .player-hud-row {
+      #game>.player-hud-row {
         min-height: 44px;
       }
 
@@ -1037,12 +1054,29 @@
         height: 28px;
       }
 
-      #game.online-match .cube-face.f-1 { transform: translateZ(12px); }
-      #game.online-match .cube-face.f-6 { transform: rotateY(180deg) translateZ(12px); }
-      #game.online-match .cube-face.f-2 { transform: rotateY(90deg) translateZ(12px); }
-      #game.online-match .cube-face.f-5 { transform: rotateY(-90deg) translateZ(12px); }
-      #game.online-match .cube-face.f-3 { transform: rotateX(90deg) translateZ(12px); }
-      #game.online-match .cube-face.f-4 { transform: rotateX(-90deg) translateZ(12px); }
+      #game.online-match .cube-face.f-1 {
+        transform: translateZ(12px);
+      }
+
+      #game.online-match .cube-face.f-6 {
+        transform: rotateY(180deg) translateZ(12px);
+      }
+
+      #game.online-match .cube-face.f-2 {
+        transform: rotateY(90deg) translateZ(12px);
+      }
+
+      #game.online-match .cube-face.f-5 {
+        transform: rotateY(-90deg) translateZ(12px);
+      }
+
+      #game.online-match .cube-face.f-3 {
+        transform: rotateX(90deg) translateZ(12px);
+      }
+
+      #game.online-match .cube-face.f-4 {
+        transform: rotateX(-90deg) translateZ(12px);
+      }
 
       #game.online-match .dice-badge {
         width: 28px;
@@ -1208,6 +1242,7 @@
       0% {
         box-shadow: 0 0 6px rgba(244, 196, 48, 0.7);
       }
+
       100% {
         box-shadow: 0 0 12px rgba(244, 196, 48, 1);
       }
@@ -1385,6 +1420,7 @@
         box-shadow: 0 0 0 2px #10B981, 0 0 10px rgba(16, 185, 129, 0.7);
         transform: scale(1.02);
       }
+
       100% {
         box-shadow: 0 0 0 4.5px #34D399, 0 0 22px rgba(16, 185, 129, 1);
         transform: scale(1.12);
@@ -1616,6 +1652,7 @@
     }
 
     @keyframes promptBounce {
+
       0%,
       100% {
         transform: translateY(0);
@@ -1830,6 +1867,7 @@
     }
 
     @keyframes tokenHopIdle {
+
       0%,
       100% {
         transform: translate(-50%, -50%) scale(1) translateY(0)
@@ -1841,6 +1879,7 @@
     }
 
     @keyframes haloBreathe {
+
       0%,
       100% {
         opacity: 0.5;
@@ -2586,6 +2625,7 @@
     }
 
     @keyframes pulseDot {
+
       0%,
       100% {
         opacity: 1
@@ -3090,9 +3130,8 @@
       <h2>Join Online Room</h2>
       <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px">Enter the 4-digit Room Code</p>
       <div class="field">
-        <input id="roomCodeInput" maxlength="4" inputmode="numeric" autocomplete="one-time-code"
-          pattern="[0-9]{4}" placeholder="e.g. 4827"
-          aria-label="4-digit room code"
+        <input id="roomCodeInput" maxlength="4" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{4}"
+          placeholder="e.g. 4827" aria-label="4-digit room code"
           style="text-align:center;font-size:22px;letter-spacing:6px;text-transform:uppercase;font-weight:900">
       </div>
       <div class="ch-actions" style="margin-top:14px">
@@ -3157,7 +3196,8 @@
           <div class="player-details">
             <div class="pname-row">
               <div class="pname" id="name_green">Player 2</div>
-              <button class="hud-mute-btn hidden" id="mute_btn_green" title="Mute Player" data-color="green" aria-label="Mute Player">🔊</button>
+              <button class="hud-mute-btn hidden" id="mute_btn_green" title="Mute Player" data-color="green"
+                aria-label="Mute Player">🔊</button>
             </div>
             <div class="home-meter" id="meter_green">
               <div class="home-crown" aria-label="Token not home"></div>
@@ -3260,7 +3300,8 @@
           <div class="player-details">
             <div class="pname-row">
               <div class="pname" id="name_yellow">Opponent</div>
-              <button class="hud-mute-btn hidden" id="mute_btn_yellow" title="Mute Player" data-color="yellow" aria-label="Mute Player">🔊</button>
+              <button class="hud-mute-btn hidden" id="mute_btn_yellow" title="Mute Player" data-color="yellow"
+                aria-label="Mute Player">🔊</button>
             </div>
             <div class="home-meter" id="meter_yellow">
               <div class="home-crown" aria-label="Token not home"></div>
@@ -3354,9 +3395,10 @@
       <button class="game-bar-btn" id="btnLeave" title="Leave Game">🚪</button>
       <div class="turn-label" id="turnLabel">● YOUR TURN</div>
       <div class="game-top-actions">
-        <button class="game-bar-btn voice-btn muted" id="btnMic" title="Microphone: MUTED (Click to Unmute)">🔇</button>
-        <button class="game-bar-btn voice-btn active" id="btnSpeaker" title="Speaker: ON (Click to Deafen)">🔊</button>
-        <button class="game-bar-btn" id="btnChat" title="Chat">💬<span class="ctrl-badge hidden" id="chatBadge">0</span></button>
+        <button class="game-bar-btn voice-btn disabled" id="btnMic" title="Microphone (Mute/Unmute)">🎙️</button>
+        <button class="game-bar-btn voice-btn disabled" id="btnSpeaker" title="Speaker (Deafen/Undeafen)">🔊</button>
+        <button class="game-bar-btn" id="btnChat" title="Chat">💬<span class="ctrl-badge hidden"
+            id="chatBadge">0</span></button>
       </div>
     </div>
 
@@ -3385,7 +3427,8 @@
           <div class="player-details">
             <div class="pname-row">
               <div class="pname" id="name_red">You</div>
-              <button class="hud-mute-btn hidden" id="mute_btn_red" title="Microphone" data-color="red" aria-label="Microphone">🎙️</button>
+              <button class="hud-mute-btn hidden" id="mute_btn_red" title="Microphone" data-color="red"
+                aria-label="Microphone">🎙️</button>
             </div>
             <div class="home-meter" id="meter_red">
               <div class="home-crown" aria-label="Token not home"></div>
@@ -3490,7 +3533,8 @@
           <div class="player-details">
             <div class="pname-row">
               <div class="pname" id="name_blue">Player 4</div>
-              <button class="hud-mute-btn hidden" id="mute_btn_blue" title="Mute Player" data-color="blue" aria-label="Mute Player">🔊</button>
+              <button class="hud-mute-btn hidden" id="mute_btn_blue" title="Mute Player" data-color="blue"
+                aria-label="Mute Player">🔊</button>
             </div>
             <div class="home-meter" id="meter_blue">
               <div class="home-crown" aria-label="Token not home"></div>
@@ -4881,7 +4925,7 @@
     $('btnRejectChallenge').onclick = rejectIncomingChallenge;
     $('btnCancelSearch').onclick = () => cancelChallenge('cancel');
 
-        function startDirect1v1Match(opponent) {
+    function startDirect1v1Match(opponent) {
       if (!IS_HOST || !roomChannel) return;
       const colors = ['red', 'yellow'];
       const configs = {
@@ -5848,28 +5892,13 @@
       iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' },
-        { urls: 'stun:stun3.l.google.com:19302' },
-        { urls: 'stun:stun4.l.google.com:19302' }
+        { urls: 'stun:stun2.l.google.com:19302' }
       ],
       isSupported: !!(window.RTCPeerConnection && navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
 
       init() {
         this.updateTopBarUI();
         this.attachButtonHandlers();
-        document.addEventListener('click', () => this.unlockAudio(), { passive: true });
-        document.addEventListener('touchstart', () => this.unlockAudio(), { passive: true });
-      },
-
-      unlockAudio() {
-        if (this.audioContext && this.audioContext.state === 'suspended') {
-          try { this.audioContext.resume(); } catch (e) { }
-        }
-        Object.values(this.peerAudioElems).forEach(elem => {
-          if (elem && elem.paused && this.isSpeakerOn) {
-            try { elem.play().catch(() => { }); } catch (e) { }
-          }
-        });
       },
 
       attachButtonHandlers() {
@@ -5894,6 +5923,16 @@
         const btnMic = $('btnMic');
         const btnSpeaker = $('btnSpeaker');
         if (!btnMic || !btnSpeaker) return;
+
+        if (!this.isSupported) {
+          btnMic.classList.add('disabled');
+          btnSpeaker.classList.add('disabled');
+          btnMic.title = 'Voice Chat is not supported on this browser';
+          btnSpeaker.title = 'Voice Chat is not supported on this browser';
+          btnMic.innerHTML = '🎙️';
+          btnSpeaker.innerHTML = '🔊';
+          return;
+        }
 
         btnMic.classList.remove('disabled');
         btnSpeaker.classList.remove('disabled');
@@ -5921,10 +5960,6 @@
 
       async getOrCreateLocalStream() {
         if (this.localStream) return this.localStream;
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          toast('Microphone access requires HTTPS or localhost (Secure Context)');
-          return null;
-        }
         try {
           const stream = await navigator.mediaDevices.getUserMedia({
             audio: {
@@ -5939,11 +5974,7 @@
           return stream;
         } catch (err) {
           console.warn('[VoiceChat] getUserMedia error:', err);
-          if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-            toast('Microphone permission blocked. Please allow mic in browser settings.');
-          } else {
-            toast('Microphone unavailable or not detected.');
-          }
+          toast('Microphone access denied or unavailable');
           return null;
         }
       },
@@ -6043,7 +6074,7 @@
           audioTrack.enabled = this.isMicOn;
         }
 
-        // Apply replaceTrack across all peer connections seamlessly in online mode
+        // Apply across all active peer connections
         for (const pc of Object.values(this.peerConnections)) {
           const senders = pc.getSenders ? pc.getSenders() : [];
           const audioSender = senders.find(s => s.track?.kind === 'audio' || !s.track);
@@ -6053,7 +6084,7 @@
             } catch (e) {
               console.warn('[VoiceChat] replaceTrack error:', e);
             }
-          } else if (audioTrack) {
+          } else if (audioTrack && this.isMicOn) {
             try { pc.addTrack(audioTrack, this.localStream); } catch (e) { }
           }
         }
@@ -6183,14 +6214,10 @@
       getOrCreatePeerConnection(peerId) {
         if (this.peerConnections[peerId]) return this.peerConnections[peerId];
 
-        const pc = new RTCPeerConnection({
-          iceServers: this.iceServers,
-          sdpSemantics: 'unified-plan'
-        });
+        const pc = new RTCPeerConnection({ iceServers: this.iceServers });
         this.peerConnections[peerId] = pc;
 
-        // Add transceiver for audio
-        if (this.localStream && this.isMicOn) {
+        if (this.localStream) {
           this.localStream.getAudioTracks().forEach(track => {
             try { pc.addTrack(track, this.localStream); } catch (e) { }
           });
@@ -6211,20 +6238,16 @@
         };
 
         pc.ontrack = (event) => {
-          console.log('[VoiceChat] ontrack received stream from', peerId);
           let audioElem = this.peerAudioElems[peerId];
           if (!audioElem) {
             audioElem = document.createElement('audio');
             audioElem.autoplay = true;
             audioElem.playsInline = true;
-            audioElem.volume = 1.0;
             document.body.appendChild(audioElem);
             this.peerAudioElems[peerId] = audioElem;
           }
-          const stream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
-          audioElem.srcObject = stream;
+          audioElem.srcObject = event.streams[0] || new MediaStream([event.track]);
           audioElem.muted = !this.isSpeakerOn || this.mutedPeers.has(peerId);
-          audioElem.play().catch(() => { });
         };
 
         pc.onconnectionstatechange = () => {
@@ -6242,7 +6265,7 @@
 
         const pc = this.getOrCreatePeerConnection(peerId);
         try {
-          const offer = await pc.createOffer({ offerToReceiveAudio: true });
+          const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
           if (roomChannel) {
             roomChannel.send({
@@ -6263,9 +6286,6 @@
         if (payload.type === 'offer' && payload.sdp) {
           const pc = this.getOrCreatePeerConnection(peerId);
           try {
-            if (pc.signalingState !== 'stable') {
-              try { await pc.setLocalDescription({ type: 'rollback' }); } catch (e) { }
-            }
             await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
             if (this.pendingCandidates[peerId]) {
               for (const cand of this.pendingCandidates[peerId]) {
