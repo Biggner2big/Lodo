@@ -1277,6 +1277,12 @@
       z-index: 15;
     }
 
+    .game-top-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
     .game-bar-btn {
       width: 38px;
       height: 38px;
@@ -1302,6 +1308,87 @@
 
     .game-bar-btn:active {
       transform: scale(0.92);
+    }
+
+    .game-bar-btn.voice-btn {
+      font-size: 15px;
+    }
+
+    .game-bar-btn.voice-btn.active {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.32), rgba(6, 95, 70, 0.22));
+      border-color: rgba(16, 185, 129, 0.8);
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
+      color: #34D399;
+    }
+
+    .game-bar-btn.voice-btn.muted {
+      background: linear-gradient(135deg, rgba(226, 75, 75, 0.28), rgba(139, 0, 0, 0.18));
+      border-color: rgba(226, 75, 75, 0.6);
+      box-shadow: 0 0 10px rgba(226, 75, 75, 0.4);
+      color: #FF7676;
+    }
+
+    .game-bar-btn.voice-btn.disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    /* Pname Row and Per-Player HUD Mute Button */
+    .pname-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      gap: 3px;
+    }
+
+    .hud-mute-btn {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.08);
+      color: #D6E0FF;
+      font-size: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      transition: all 0.18s ease;
+      flex-shrink: 0;
+    }
+
+    .hud-mute-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: var(--gold);
+      transform: scale(1.1);
+    }
+
+    .hud-mute-btn.muted {
+      background: rgba(226, 75, 75, 0.3);
+      border-color: rgba(226, 75, 75, 0.7);
+      color: #FF7676;
+      box-shadow: 0 0 8px rgba(226, 75, 75, 0.4);
+    }
+
+    /* Speaking Pulse Glow on Avatar */
+    .avatar-disc.avatar-speaking {
+      box-shadow: 0 0 0 3px #10B981, 0 0 18px rgba(16, 185, 129, 0.95) !important;
+      animation: speakingPulse 0.75s ease-in-out infinite alternate !important;
+    }
+
+    @keyframes speakingPulse {
+      0% {
+        box-shadow: 0 0 0 2px #10B981, 0 0 10px rgba(16, 185, 129, 0.7);
+        transform: scale(1.02);
+      }
+      100% {
+        box-shadow: 0 0 0 4.5px #34D399, 0 0 22px rgba(16, 185, 129, 1);
+        transform: scale(1.12);
+      }
     }
 
     /* Centered & Prominent Dice Station */
@@ -3068,7 +3155,10 @@
             <span class="avatar-online-dot" aria-label="Online"></span>
           </div>
           <div class="player-details">
-            <div class="pname" id="name_green">Player 2</div>
+            <div class="pname-row">
+              <div class="pname" id="name_green">Player 2</div>
+              <button class="hud-mute-btn hidden" id="mute_btn_green" title="Mute Player" data-color="green" aria-label="Mute Player">🔊</button>
+            </div>
             <div class="home-meter" id="meter_green">
               <div class="home-crown" aria-label="Token not home"></div>
               <div class="home-crown" aria-label="Token not home"></div>
@@ -3168,7 +3258,10 @@
             <span class="avatar-online-dot" aria-label="Online"></span>
           </div>
           <div class="player-details">
-            <div class="pname" id="name_yellow">Opponent</div>
+            <div class="pname-row">
+              <div class="pname" id="name_yellow">Opponent</div>
+              <button class="hud-mute-btn hidden" id="mute_btn_yellow" title="Mute Player" data-color="yellow" aria-label="Mute Player">🔊</button>
+            </div>
             <div class="home-meter" id="meter_yellow">
               <div class="home-crown" aria-label="Token not home"></div>
               <div class="home-crown" aria-label="Token not home"></div>
@@ -3256,12 +3349,15 @@
       </div>
     </div>
 
-    <!-- GAME TOP UTILITY BAR (Cleanly hosts Leave, Turn Label & Chat) -->
+    <!-- GAME TOP UTILITY BAR (Cleanly hosts Leave, Turn Label, Voice Controls & Chat) -->
     <div class="game-top-bar">
       <button class="game-bar-btn" id="btnLeave" title="Leave Game">🚪</button>
       <div class="turn-label" id="turnLabel">● YOUR TURN</div>
-      <button class="game-bar-btn" id="btnChat" title="Chat">💬<span class="ctrl-badge hidden"
-          id="chatBadge">0</span></button>
+      <div class="game-top-actions">
+        <button class="game-bar-btn voice-btn disabled" id="btnMic" title="Microphone (Mute/Unmute)">🎙️</button>
+        <button class="game-bar-btn voice-btn disabled" id="btnSpeaker" title="Speaker (Deafen/Undeafen)">🔊</button>
+        <button class="game-bar-btn" id="btnChat" title="Chat">💬<span class="ctrl-badge hidden" id="chatBadge">0</span></button>
+      </div>
     </div>
 
     <!-- BOARD AREA -->
@@ -3287,7 +3383,10 @@
             <span class="avatar-online-dot" aria-label="Online"></span>
           </div>
           <div class="player-details">
-            <div class="pname" id="name_red">You</div>
+            <div class="pname-row">
+              <div class="pname" id="name_red">You</div>
+              <button class="hud-mute-btn hidden" id="mute_btn_red" title="Microphone" data-color="red" aria-label="Microphone">🎙️</button>
+            </div>
             <div class="home-meter" id="meter_red">
               <div class="home-crown" aria-label="Token not home"></div>
               <div class="home-crown" aria-label="Token not home"></div>
@@ -3389,7 +3488,10 @@
             <span class="avatar-online-dot" aria-label="Online"></span>
           </div>
           <div class="player-details">
-            <div class="pname" id="name_blue">Player 4</div>
+            <div class="pname-row">
+              <div class="pname" id="name_blue">Player 4</div>
+              <button class="hud-mute-btn hidden" id="mute_btn_blue" title="Mute Player" data-color="blue" aria-label="Mute Player">🔊</button>
+            </div>
             <div class="home-meter" id="meter_blue">
               <div class="home-crown" aria-label="Token not home"></div>
               <div class="home-crown" aria-label="Token not home"></div>
@@ -4521,6 +4623,10 @@
         bottomRow.classList.toggle('single-player', botVisible.length === 1);
       }
 
+      if (window.VoiceChat) {
+        VoiceChat.syncMuteButtons(activeColors);
+      }
+
       updateTurnUI();
     }
 
@@ -4880,12 +4986,23 @@
 
       roomChannel.on('presence', { event: 'leave' }, ({ key }) => {
         syncRoomLobby();
+        if (window.VoiceChat) VoiceChat.closePeer(key);
         if (GAME_STARTED && IS_HOST) {
           handlePlayerDisconnectInGame(key);
         }
       });
 
-            roomChannel.on('broadcast', { event: 'guest-ready' }, ({ payload }) => {
+      roomChannel.on('broadcast', { event: 'voice-signal' }, ({ payload }) => {
+        if (!payload || payload.to !== PLAYER_ID) return;
+        if (window.VoiceChat) VoiceChat.handleSignal(payload);
+      });
+
+      roomChannel.on('broadcast', { event: 'voice-state' }, ({ payload }) => {
+        if (!payload || payload.from === PLAYER_ID) return;
+        if (window.VoiceChat) VoiceChat.handleRemoteVoiceState(payload);
+      });
+
+      roomChannel.on('broadcast', { event: 'guest-ready' }, ({ payload }) => {
         if (IS_HOST && isDirectChallenge && !GAME_STARTED && payload) {
           startDirect1v1Match({ from: payload.id, fromName: payload.name, fromAvatar: payload.avatar });
         }
@@ -5711,6 +5828,532 @@
       chatChannel.subscribe();
     }
 
+    /* ============ REAL-TIME WEBRTC VOICE CHAT ENGINE ============ */
+    const VoiceChat = {
+      localStream: null,
+      isMicOn: false,
+      isSpeakerOn: true,
+      audioContext: null,
+      analyser: null,
+      analyserData: null,
+      animFrameId: null,
+      isSpeaking: false,
+      speakDebounceTimer: null,
+      peerConnections: {}, // peerId -> RTCPeerConnection
+      peerAudioElems: {}, // peerId -> HTMLAudioElement
+      peerColors: {}, // peerId -> color
+      colorToPeerId: {}, // color -> peerId
+      mutedPeers: new Set(), // Set of peer IDs muted locally
+      pendingCandidates: {}, // peerId -> Array of candidate objects
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' }
+      ],
+      isSupported: !!(window.RTCPeerConnection && navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
+
+      init() {
+        this.updateTopBarUI();
+        this.attachButtonHandlers();
+      },
+
+      attachButtonHandlers() {
+        const btnMic = $('btnMic');
+        if (btnMic) btnMic.onclick = () => this.toggleMic();
+
+        const btnSpeaker = $('btnSpeaker');
+        if (btnSpeaker) btnSpeaker.onclick = () => this.toggleSpeaker();
+
+        ALL_COLORS.forEach(color => {
+          const btn = $(`mute_btn_${color}`);
+          if (btn) {
+            btn.onclick = (e) => {
+              e.stopPropagation();
+              this.togglePlayerMute(color);
+            };
+          }
+        });
+      },
+
+      updateTopBarUI() {
+        const btnMic = $('btnMic');
+        const btnSpeaker = $('btnSpeaker');
+        if (!btnMic || !btnSpeaker) return;
+
+        if (!this.isSupported || CURRENT_MODE !== 'online' || !GAME_STARTED) {
+          btnMic.classList.add('disabled');
+          btnSpeaker.classList.add('disabled');
+          btnMic.title = 'Voice Chat (Online Match Only)';
+          btnSpeaker.title = 'Voice Chat (Online Match Only)';
+          btnMic.innerHTML = '🎙️';
+          btnSpeaker.innerHTML = '🔊';
+          return;
+        }
+
+        btnMic.classList.remove('disabled');
+        btnSpeaker.classList.remove('disabled');
+
+        if (this.isMicOn) {
+          btnMic.className = 'game-bar-btn voice-btn active';
+          btnMic.innerHTML = '🎙️';
+          btnMic.title = 'Microphone: ON (Click to Mute)';
+        } else {
+          btnMic.className = 'game-bar-btn voice-btn muted';
+          btnMic.innerHTML = '🔇';
+          btnMic.title = 'Microphone: MUTED (Click to Unmute)';
+        }
+
+        if (this.isSpeakerOn) {
+          btnSpeaker.className = 'game-bar-btn voice-btn active';
+          btnSpeaker.innerHTML = '🔊';
+          btnSpeaker.title = 'Speaker: ON (Click to Deafen)';
+        } else {
+          btnSpeaker.className = 'game-bar-btn voice-btn muted';
+          btnSpeaker.innerHTML = '🔇';
+          btnSpeaker.title = 'Speaker: DEAFENED (Click to Undeafen)';
+        }
+      },
+
+      async getOrCreateLocalStream() {
+        if (this.localStream) return this.localStream;
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            },
+            video: false
+          });
+          this.localStream = stream;
+          this.setupAudioAnalyser(stream);
+          return stream;
+        } catch (err) {
+          console.warn('[VoiceChat] getUserMedia error:', err);
+          toast('Microphone access denied or unavailable');
+          return null;
+        }
+      },
+
+      setupAudioAnalyser(stream) {
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) return;
+          if (!this.audioContext || this.audioContext.state === 'closed') {
+            this.audioContext = new AudioContextClass();
+          }
+          if (this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
+          }
+          const source = this.audioContext.createMediaStreamSource(stream);
+          this.analyser = this.audioContext.createAnalyser();
+          this.analyser.fftSize = 256;
+          this.analyser.smoothingTimeConstant = 0.3;
+          source.connect(this.analyser);
+          this.analyserData = new Uint8Array(this.analyser.frequencyBinCount);
+          this.startVoiceActivityDetection();
+        } catch (e) {
+          console.warn('[VoiceChat] Audio analyser error:', e);
+        }
+      },
+
+      startVoiceActivityDetection() {
+        if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
+        const checkVolume = () => {
+          if (!this.analyser || !this.isMicOn || !this.localStream) {
+            this.setLocalSpeaking(false);
+            this.animFrameId = requestAnimationFrame(checkVolume);
+            return;
+          }
+
+          this.analyser.getByteFrequencyData(this.analyserData);
+          let sum = 0;
+          for (let i = 0; i < this.analyserData.length; i++) {
+            sum += this.analyserData[i];
+          }
+          const avg = sum / this.analyserData.length;
+          const threshold = 16;
+
+          if (avg > threshold) {
+            this.setLocalSpeaking(true);
+            if (this.speakDebounceTimer) {
+              clearTimeout(this.speakDebounceTimer);
+              this.speakDebounceTimer = null;
+            }
+          } else if (this.isSpeaking && !this.speakDebounceTimer) {
+            this.speakDebounceTimer = setTimeout(() => {
+              this.setLocalSpeaking(false);
+              this.speakDebounceTimer = null;
+            }, 350);
+          }
+
+          this.animFrameId = requestAnimationFrame(checkVolume);
+        };
+        this.animFrameId = requestAnimationFrame(checkVolume);
+      },
+
+      setLocalSpeaking(speaking) {
+        if (this.isSpeaking === speaking) return;
+        this.isSpeaking = speaking;
+        const myAvatar = $(`avatar_${MY_COLOR}`);
+        if (myAvatar) {
+          if (speaking) myAvatar.classList.add('avatar-speaking');
+          else myAvatar.classList.remove('avatar-speaking');
+        }
+        if (roomChannel && CURRENT_MODE === 'online' && GAME_STARTED) {
+          try {
+            roomChannel.send({
+              type: 'broadcast',
+              event: 'voice-state',
+              payload: { from: PLAYER_ID, color: MY_COLOR, speaking }
+            });
+          } catch (e) { }
+        }
+      },
+
+      async toggleMic() {
+        if (CURRENT_MODE !== 'online' || !GAME_STARTED) {
+          toast('Voice chat is available in Online Multiplayer');
+          return;
+        }
+        if (!this.isSupported) {
+          toast('Voice chat is not supported on this browser');
+          return;
+        }
+
+        if (!this.localStream) {
+          const stream = await this.getOrCreateLocalStream();
+          if (!stream) return;
+        }
+
+        this.isMicOn = !this.isMicOn;
+        if (this.localStream) {
+          this.localStream.getAudioTracks().forEach(track => {
+            track.enabled = this.isMicOn;
+          });
+        }
+
+        if (this.isMicOn && this.localStream) {
+          const audioTrack = this.localStream.getAudioTracks()[0];
+          if (audioTrack) {
+            Object.values(this.peerConnections).forEach(pc => {
+              const senders = pc.getSenders ? pc.getSenders() : [];
+              const hasAudioSender = senders.some(s => s.track && s.track.kind === 'audio');
+              if (!hasAudioSender) {
+                try { pc.addTrack(audioTrack, this.localStream); } catch (e) { }
+              }
+            });
+          }
+        }
+
+        if (roomChannel) {
+          try {
+            roomChannel.send({
+              type: 'broadcast',
+              event: 'voice-state',
+              payload: { from: PLAYER_ID, color: MY_COLOR, muted: !this.isMicOn }
+            });
+          } catch (e) { }
+        }
+
+        this.updateTopBarUI();
+        this.syncMuteButtons(G ? G.activeColors : ALL_COLORS);
+        toast(this.isMicOn ? '🎙️ Mic Unmuted' : '🔇 Mic Muted');
+      },
+
+      toggleSpeaker() {
+        if (CURRENT_MODE !== 'online' || !GAME_STARTED) {
+          toast('Voice chat is available in Online Multiplayer');
+          return;
+        }
+        this.isSpeakerOn = !this.isSpeakerOn;
+        this.applySpeakerState();
+        this.updateTopBarUI();
+        toast(this.isSpeakerOn ? '🔊 Speaker Active' : '🔇 Deafened (All Audio Muted)');
+      },
+
+      applySpeakerState() {
+        Object.entries(this.peerAudioElems).forEach(([peerId, audioElem]) => {
+          const isPeerMuted = this.mutedPeers.has(peerId);
+          audioElem.muted = !this.isSpeakerOn || isPeerMuted;
+        });
+      },
+
+      togglePlayerMute(color) {
+        if (color === MY_COLOR) {
+          this.toggleMic();
+          return;
+        }
+        const peerId = this.colorToPeerId[color];
+        const btn = $(`mute_btn_${color}`);
+        if (!peerId) {
+          toast(`Player is connecting to voice…`);
+          return;
+        }
+
+        if (this.mutedPeers.has(peerId)) {
+          this.mutedPeers.delete(peerId);
+          const audioElem = this.peerAudioElems[peerId];
+          if (audioElem) audioElem.muted = !this.isSpeakerOn;
+          if (btn) {
+            btn.classList.remove('muted');
+            btn.innerHTML = '🔊';
+            btn.title = `Mute ${G?.players[color]?.name || color}`;
+          }
+          toast(`Unmuted ${G?.players[color]?.name || color}`);
+        } else {
+          this.mutedPeers.add(peerId);
+          const audioElem = this.peerAudioElems[peerId];
+          if (audioElem) audioElem.muted = true;
+          if (btn) {
+            btn.classList.add('muted');
+            btn.innerHTML = '🔇';
+            btn.title = `Unmute ${G?.players[color]?.name || color}`;
+          }
+          toast(`Muted ${G?.players[color]?.name || color}`);
+        }
+      },
+
+      syncMuteButtons(activeColors) {
+        ALL_COLORS.forEach(c => {
+          const btn = $(`mute_btn_${c}`);
+          if (!btn) return;
+          if (CURRENT_MODE === 'online' && GAME_STARTED && activeColors && activeColors.includes(c)) {
+            if (c === MY_COLOR) {
+              btn.classList.remove('hidden');
+              btn.innerHTML = this.isMicOn ? '🎙️' : '🔇';
+              btn.className = 'hud-mute-btn' + (this.isMicOn ? '' : ' muted');
+              btn.title = this.isMicOn ? 'Microphone: ON (Click to Mute)' : 'Microphone: MUTED (Click to Unmute)';
+            } else {
+              const peerId = this.colorToPeerId[c];
+              btn.classList.remove('hidden');
+              const isPeerMuted = peerId ? this.mutedPeers.has(peerId) : false;
+              btn.innerHTML = isPeerMuted ? '🔇' : '🔊';
+              btn.className = 'hud-mute-btn' + (isPeerMuted ? ' muted' : '');
+              btn.title = isPeerMuted ? `Unmute ${G?.players[c]?.name || c}` : `Mute ${G?.players[c]?.name || c}`;
+            }
+          } else {
+            btn.classList.add('hidden');
+          }
+        });
+      },
+
+      startMeshForRoom(members, activeColors) {
+        if (CURRENT_MODE !== 'online' || !this.isSupported) return;
+        this.updateTopBarUI();
+
+        if (activeColors) {
+          activeColors.forEach(c => {
+            const p = G?.players[c];
+            if (p && p.id && p.id !== PLAYER_ID && !p.isBot) {
+              this.peerColors[p.id] = c;
+              this.colorToPeerId[c] = p.id;
+            }
+          });
+        }
+
+        this.syncMuteButtons(activeColors || ALL_COLORS);
+
+        // Initiate connection to peers if offerer
+        Object.keys(this.peerColors).forEach(peerId => {
+          this.initiatePeerConnectionIfNeeded(peerId);
+        });
+      },
+
+      getOrCreatePeerConnection(peerId) {
+        if (this.peerConnections[peerId]) return this.peerConnections[peerId];
+
+        const pc = new RTCPeerConnection({ iceServers: this.iceServers });
+        this.peerConnections[peerId] = pc;
+
+        if (this.localStream) {
+          this.localStream.getAudioTracks().forEach(track => {
+            try { pc.addTrack(track, this.localStream); } catch (e) { }
+          });
+        } else {
+          try { pc.addTransceiver('audio', { direction: 'sendrecv' }); } catch (e) { }
+        }
+
+        pc.onicecandidate = (event) => {
+          if (event.candidate && roomChannel) {
+            try {
+              roomChannel.send({
+                type: 'broadcast',
+                event: 'voice-signal',
+                payload: { from: PLAYER_ID, to: peerId, type: 'candidate', candidate: event.candidate }
+              });
+            } catch (e) { }
+          }
+        };
+
+        pc.ontrack = (event) => {
+          let audioElem = this.peerAudioElems[peerId];
+          if (!audioElem) {
+            audioElem = document.createElement('audio');
+            audioElem.autoplay = true;
+            audioElem.playsInline = true;
+            document.body.appendChild(audioElem);
+            this.peerAudioElems[peerId] = audioElem;
+          }
+          audioElem.srcObject = event.streams[0] || new MediaStream([event.track]);
+          audioElem.muted = !this.isSpeakerOn || this.mutedPeers.has(peerId);
+        };
+
+        pc.onconnectionstatechange = () => {
+          if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+            this.closePeer(peerId);
+          }
+        };
+
+        return pc;
+      },
+
+      async initiatePeerConnectionIfNeeded(peerId) {
+        const isOfferer = (PLAYER_ID < peerId);
+        if (!isOfferer) return;
+
+        const pc = this.getOrCreatePeerConnection(peerId);
+        try {
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          if (roomChannel) {
+            roomChannel.send({
+              type: 'broadcast',
+              event: 'voice-signal',
+              payload: { from: PLAYER_ID, to: peerId, type: 'offer', sdp: offer }
+            });
+          }
+        } catch (err) {
+          console.warn('[VoiceChat] Create offer error for', peerId, err);
+        }
+      },
+
+      async handleSignal(payload) {
+        if (!payload || payload.to !== PLAYER_ID || !payload.from) return;
+        const peerId = payload.from;
+
+        if (payload.type === 'offer' && payload.sdp) {
+          const pc = this.getOrCreatePeerConnection(peerId);
+          try {
+            await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+            if (this.pendingCandidates[peerId]) {
+              for (const cand of this.pendingCandidates[peerId]) {
+                try { await pc.addIceCandidate(new RTCIceCandidate(cand)); } catch (e) { }
+              }
+              delete this.pendingCandidates[peerId];
+            }
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            if (roomChannel) {
+              roomChannel.send({
+                type: 'broadcast',
+                event: 'voice-signal',
+                payload: { from: PLAYER_ID, to: peerId, type: 'answer', sdp: answer }
+              });
+            }
+          } catch (err) {
+            console.warn('[VoiceChat] Handle offer error:', err);
+          }
+        } else if (payload.type === 'answer' && payload.sdp) {
+          const pc = this.peerConnections[peerId];
+          if (pc) {
+            try {
+              await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
+              if (this.pendingCandidates[peerId]) {
+                for (const cand of this.pendingCandidates[peerId]) {
+                  try { await pc.addIceCandidate(new RTCIceCandidate(cand)); } catch (e) { }
+                }
+                delete this.pendingCandidates[peerId];
+              }
+            } catch (err) {
+              console.warn('[VoiceChat] Handle answer error:', err);
+            }
+          }
+        } else if (payload.type === 'candidate' && payload.candidate) {
+          const pc = this.peerConnections[peerId];
+          if (pc && pc.remoteDescription && pc.remoteDescription.type) {
+            try {
+              await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
+            } catch (e) { }
+          } else {
+            if (!this.pendingCandidates[peerId]) this.pendingCandidates[peerId] = [];
+            this.pendingCandidates[peerId].push(payload.candidate);
+          }
+        }
+      },
+
+      handleRemoteVoiceState(payload) {
+        if (!payload || !payload.color) return;
+        const avatar = $(`avatar_${payload.color}`);
+        if (payload.speaking !== undefined && avatar) {
+          if (payload.speaking) avatar.classList.add('avatar-speaking');
+          else avatar.classList.remove('avatar-speaking');
+        }
+      },
+
+      closePeer(peerId) {
+        const pc = this.peerConnections[peerId];
+        if (pc) {
+          try { pc.close(); } catch (e) { }
+          delete this.peerConnections[peerId];
+        }
+        const audioElem = this.peerAudioElems[peerId];
+        if (audioElem) {
+          try { audioElem.pause(); audioElem.srcObject = null; audioElem.remove(); } catch (e) { }
+          delete this.peerAudioElems[peerId];
+        }
+        const color = this.peerColors[peerId];
+        if (color) {
+          const avatar = $(`avatar_${color}`);
+          if (avatar) avatar.classList.remove('avatar-speaking');
+          const btn = $(`mute_btn_${color}`);
+          if (btn) btn.classList.add('hidden');
+          delete this.colorToPeerId[color];
+          delete this.peerColors[peerId];
+        }
+      },
+
+      teardown() {
+        if (this.animFrameId) {
+          cancelAnimationFrame(this.animFrameId);
+          this.animFrameId = null;
+        }
+        if (this.speakDebounceTimer) {
+          clearTimeout(this.speakDebounceTimer);
+          this.speakDebounceTimer = null;
+        }
+        this.setLocalSpeaking(false);
+        ALL_COLORS.forEach(c => {
+          const av = $(`avatar_${c}`);
+          if (av) av.classList.remove('avatar-speaking');
+          const btn = $(`mute_btn_${c}`);
+          if (btn) {
+            btn.classList.add('hidden');
+            btn.classList.remove('muted');
+          }
+        });
+        Object.keys(this.peerConnections).forEach(peerId => this.closePeer(peerId));
+        this.peerConnections = {};
+        this.peerAudioElems = {};
+        this.peerColors = {};
+        this.colorToPeerId = {};
+        this.mutedPeers.clear();
+        this.pendingCandidates = {};
+
+        if (this.localStream) {
+          this.localStream.getTracks().forEach(t => t.stop());
+          this.localStream = null;
+        }
+        if (this.audioContext && this.audioContext.state !== 'closed') {
+          try { this.audioContext.close(); } catch (e) { }
+          this.audioContext = null;
+        }
+        this.isMicOn = false;
+        this.isSpeakerOn = true;
+        this.updateTopBarUI();
+      }
+    };
+
     /* ============ WIN SCREEN ============ */
     function showWinScreen() {
       if (!G || !G.winner) return;
@@ -5744,6 +6387,7 @@
     /* ============ TEARDOWN & NAVIGATION ============ */
     function teardownGameChannels() {
       clearInterval(turnTimerInterval);
+      try { if (window.VoiceChat) VoiceChat.teardown(); } catch (e) { }
       try { if (roomChannel) { roomChannel.unsubscribe(); roomChannel = null; } } catch (e) { }
       try { if (chatChannel) { chatChannel.unsubscribe(); chatChannel = null; } } catch (e) { }
       if (botTurnTimer) { clearTimeout(botTurnTimer); botTurnTimer = null; }
@@ -5848,6 +6492,13 @@
       } else if (G && isHumanTurn && G.mustMove) {
         maybeAutoMove();
       }
+
+      if (CURRENT_MODE === 'online' && G && window.VoiceChat) {
+        VoiceChat.startMeshForRoom(roomPresenceMembers, G.activeColors);
+      } else if (window.VoiceChat) {
+        VoiceChat.updateTopBarUI();
+      }
+
       Sound.startMusic();
     }
 
@@ -5946,11 +6597,13 @@
     $('lobbyAvatar').textContent = MY_AVATAR;
     syncToggles();
     updateLobbyProfileUI();
+    if (window.VoiceChat) VoiceChat.init();
 
     document.addEventListener('touchstart', () => Sound.init(), { once: true, passive: true });
     document.addEventListener('mousedown', () => Sound.init(), { once: true });
 
     window.addEventListener('beforeunload', () => {
+      try { if (window.VoiceChat) VoiceChat.teardown(); } catch (e) { }
       try { if (roomChannel && GAME_STARTED) roomChannel.send({ type: 'broadcast', event: 'leave', payload: { from: PLAYER_ID } }); } catch (e) { }
       try { if (lobbyChannel) lobbyChannel.unsubscribe(); } catch (e) { }
       try { if (roomChannel) roomChannel.unsubscribe(); } catch (e) { }

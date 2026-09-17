@@ -26,20 +26,28 @@ if (configContent.includes("sb_secret_")) {
 }
 console.log("[PASS] Security audit passed: No secret keys exposed in client files.");
 
-// 3. Verify color combination and modal support in HTML & CSS
+// 3. Verify color combination, voice chat controls and modal support in HTML & CSS
 const colors = ['red', 'green', 'yellow', 'blue'];
 for (const c of colors) {
   if (!htmlContent.includes(`.token.${c}`)) throw new Error(`Missing .token.${c} in CSS`);
   if (!htmlContent.includes(`.msg.${c}`)) throw new Error(`Missing .msg.${c} in CSS`);
   if (!htmlContent.includes(`id="card_${c}"`)) throw new Error(`Missing card_${c} in HTML`);
   if (!htmlContent.includes(`id="tray_${c}"`)) throw new Error(`Missing tray_${c} in HTML`);
+  if (!htmlContent.includes(`id="mute_btn_${c}"`)) throw new Error(`Missing mute_btn_${c} in HTML`);
 }
+if (!htmlContent.includes('id="btnMic"')) throw new Error('Missing btnMic in HTML');
+if (!htmlContent.includes('id="btnSpeaker"')) throw new Error('Missing btnSpeaker in HTML');
+if (!htmlContent.includes('avatar-speaking')) throw new Error('Missing avatar-speaking in CSS/JS');
+if (!htmlContent.includes('const VoiceChat = {')) throw new Error('Missing VoiceChat engine in JS');
+if (!htmlContent.includes('voice-signal')) throw new Error('Missing voice-signal signaling handler in JS');
+if (!htmlContent.includes('voice-state')) throw new Error('Missing voice-state signaling handler in JS');
+
 if (!htmlContent.includes('id="createRoomModal"')) throw new Error('Missing createRoomModal in HTML');
 if (!htmlContent.includes('id="joinRoomModal"')) throw new Error('Missing joinRoomModal in HTML');
 if (!htmlContent.includes('id="playerCountModal"')) throw new Error('Missing playerCountModal in HTML');
 if (!htmlContent.includes('id="roomLobbyOverlay"')) throw new Error('Missing roomLobbyOverlay in HTML');
 
-console.log("[PASS] 4-Color Player HUDs and Multi-Player Modals verified in HTML.");
+console.log("[PASS] 4-Color Player HUDs, Voice Controls, Per-Player Mute buttons and Multi-Player Modals verified in HTML.");
 
 // 4. Geometry and Path Definition
 const MAIN_PATH = [
