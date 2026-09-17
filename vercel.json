@@ -6,9 +6,5 @@
     { "source": "/", "destination": "/index.html" },
     { "source": "/final%20lodo.html", "destination": "/index.html" },
     { "source": "/final lodo.html", "destination": "/index.html" }
-  ],
-  "env": {
-    "SUPABASE_URL": "@supabase_url",
-    "SUPABASE_ANON_KEY": "@supabase_anon_key"
-  }
+  ]
 }
