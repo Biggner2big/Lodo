@@ -958,6 +958,43 @@
       }
     }
 
+    /* Online multiplayer: keep every player's dice as easy to tap as the normal desktop dice.
+       The board gets its own height cap so this larger control can never push it off-screen. */
+    @media (max-width: 480px) {
+      #game.online-match .dice-station {
+        min-width: 44px;
+        min-height: 44px;
+      }
+
+      #game.online-match .dice-tray {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+      }
+
+      #game.online-match .dice-cube {
+        width: 28px;
+        height: 28px;
+      }
+
+      #game.online-match .cube-face.f-1 { transform: translateZ(12px); }
+      #game.online-match .cube-face.f-6 { transform: rotateY(180deg) translateZ(12px); }
+      #game.online-match .cube-face.f-2 { transform: rotateY(90deg) translateZ(12px); }
+      #game.online-match .cube-face.f-5 { transform: rotateY(-90deg) translateZ(12px); }
+      #game.online-match .cube-face.f-3 { transform: rotateX(90deg) translateZ(12px); }
+      #game.online-match .cube-face.f-4 { transform: rotateX(-90deg) translateZ(12px); }
+
+      #game.online-match .dice-badge {
+        width: 26px;
+        height: 26px;
+        font-size: 15px;
+      }
+
+      #game.online-match .board {
+        width: min(92vw, calc(100dvh - 190px), 430px);
+      }
+    }
+
     .timer-svg {
       position: absolute;
       inset: 0;
@@ -5693,6 +5730,7 @@
       $('challengeOverlay').classList.add('hidden');
       $('roomLobbyOverlay').classList.add('hidden');
       $('lobby').classList.add('hidden');
+      $('game').classList.toggle('online-match', CURRENT_MODE === 'online');
       $('game').classList.remove('hidden');
 
       renderPlayerHUD();
