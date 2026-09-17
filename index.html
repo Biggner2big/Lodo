@@ -2389,102 +2389,102 @@
     }
 
     /* Mobile Phone Layout & HUD Scaling (Prevents off-center shifting in multiplayer) */
-    @media (max-width: 520px) {
+    @media (max-width: 560px) {
       .player-hud-row {
-        gap: 4px;
-        padding: 3px 5px;
-        min-height: 44px;
+        gap: 3px;
+        padding: 2px 4px;
+        min-height: 42px;
       }
 
       .player-card {
-        padding: 2px 4px;
-        gap: 3px;
-        border-radius: 12px;
+        padding: 2px 3px;
+        gap: 2px;
+        border-radius: 10px;
       }
 
       .player-profile-side {
-        gap: 4px;
+        gap: 3px;
         min-width: 0;
       }
 
       .avatar-wrap {
-        width: 36px;
-        height: 36px;
+        width: 34px;
+        height: 34px;
       }
 
       .avatar-disc {
-        width: 28px;
-        height: 28px;
-        font-size: 15px;
+        width: 26px;
+        height: 26px;
+        font-size: 14px;
       }
 
       .avatar-online-dot {
-        width: 7px;
-        height: 7px;
+        width: 6px;
+        height: 6px;
         right: 0px;
         bottom: 0px;
       }
 
       .player-details .pname {
-        font-size: 11px;
-        max-width: 56px;
+        font-size: 10.5px;
+        max-width: 52px;
       }
 
       .home-meter {
-        gap: 2px;
+        gap: 1.5px;
         margin-top: 1px;
       }
 
       .home-crown {
-        width: 10px;
-        height: 10px;
+        width: 9px;
+        height: 9px;
       }
 
       .home-crown::before {
-        font-size: 8px;
+        font-size: 7px;
       }
 
       .dice-station {
-        gap: 3px;
+        gap: 2px;
       }
 
       .dice-tray {
-        width: 38px;
-        height: 38px;
-        border-radius: 9px;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
       }
 
       .dice-cube {
-        width: 26px;
-        height: 26px;
+        width: 24px;
+        height: 24px;
       }
 
       .cube-face {
-        width: 26px;
-        height: 26px;
-        border-radius: 5px;
-        padding: 2px;
-        gap: 1.5px;
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        padding: 1.5px;
+        gap: 1px;
       }
 
-      .cube-face.f-1 { transform: rotateY(0deg) translateZ(13px); }
-      .cube-face.f-6 { transform: rotateY(180deg) translateZ(13px); }
-      .cube-face.f-2 { transform: rotateY(90deg) translateZ(13px); }
-      .cube-face.f-5 { transform: rotateY(-90deg) translateZ(13px); }
-      .cube-face.f-3 { transform: rotateX(90deg) translateZ(13px); }
-      .cube-face.f-4 { transform: rotateX(-90deg) translateZ(13px); }
+      .cube-face.f-1 { transform: rotateY(0deg) translateZ(12px); }
+      .cube-face.f-6 { transform: rotateY(180deg) translateZ(12px); }
+      .cube-face.f-2 { transform: rotateY(90deg) translateZ(12px); }
+      .cube-face.f-5 { transform: rotateY(-90deg) translateZ(12px); }
+      .cube-face.f-3 { transform: rotateX(90deg) translateZ(12px); }
+      .cube-face.f-4 { transform: rotateX(-90deg) translateZ(12px); }
 
       .dice-badge {
-        width: 18px;
-        height: 18px;
-        font-size: 10px;
-        top: -4px;
-        right: -4px;
+        width: 16px;
+        height: 16px;
+        font-size: 9px;
+        top: -3px;
+        right: -3px;
       }
 
       /* In multi-player rows (2 cards), hide the redundant text prompt to prevent horizontal row blowout */
       .player-hud-row:not(.single-player) .player-hud-right {
-        display: none;
+        display: none !important;
       }
 
       .player-hud-row.single-player .dice-prompt {
@@ -2492,7 +2492,8 @@
       }
 
       .board {
-        width: min(94vw, calc(100dvh - 165px));
+        width: min(92vw, 92%, calc(100dvh - 160px));
+        max-width: 440px;
         margin: 0 auto;
       }
     }
@@ -4507,6 +4508,13 @@
         if (!payload || payload.to !== PLAYER_ID) return;
         onIncomingChallenge(payload);
       });
+      lobbyChannel.on('broadcast', { event: 'challenge-rejected' }, ({ payload }) => {
+        if (!payload || payload.to !== PLAYER_ID) return;
+        if (myChallengeTarget === payload.from) {
+          cancelChallenge('rejected');
+          toast((payload.fromName || 'Player') + ' declined the match');
+        }
+      });
       lobbyChannel.subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           lobbySubscribed = true;
@@ -4526,28 +4534,37 @@
       });
     }
 
-    /* ============ DIRECT 2P CHALLENGE (FALLBACK) ============ */
+    /* ============ DIRECT 2P CHALLENGE (INSTANT 1v1 MATCH) ============ */
     let myChallengeTarget = null;
     let myChallengeTimer = null;
     let incomingChallenge = null;
     let incomingChallengeTimer = null;
+    let isDirectChallenge = false;
 
     function challengePlayer(id, name, avatar) {
       if (!lobbyChannel || myChallengeTarget || incomingChallenge || id === PLAYER_ID) return;
       Sound.init(); Sound.click();
       myChallengeTarget = id;
+      isDirectChallenge = true;
       trackPresence('busy');
       setLobbyStatus('busy');
 
       $('waitSub').textContent = 'Waiting for ' + name + ' to accept…';
       $('waitOverlay').classList.remove('hidden');
 
-      // 6 random alphanumeric chars → ~2.2B combinations, not brute-forceable
       const code = ('RD' + Math.random().toString(36).slice(2, 8)).toUpperCase();
+      CURRENT_ROOM_CODE = code;
+      ROOM_PLAYER_COUNT = 2;
+      IS_HOST = true;
+      MY_COLOR = 'red';
+      CURRENT_MODE = 'online';
+
+      bootRoomChannel(code, true, 2);
+
       try {
         lobbyChannel.send({
           type: 'broadcast', event: 'challenge',
-          payload: { from: PLAYER_ID, fromName: MY_NAME, fromAvatar: MY_AVATAR, to: id, roomCode: code, ts: now() }
+          payload: { from: PLAYER_ID, fromName: MY_NAME, fromAvatar: MY_AVATAR, to: id, roomCode: code, isDirect: true, ts: now() }
         });
       } catch (e) { }
 
@@ -4560,9 +4577,15 @@
     function cancelChallenge(reason) {
       clearTimeout(myChallengeTimer);
       myChallengeTarget = null;
+      isDirectChallenge = false;
       $('waitOverlay').classList.add('hidden');
       trackPresence('available');
       setLobbyStatus('available');
+      if (roomChannel && !GAME_STARTED) {
+        try { roomChannel.unsubscribe(); } catch (e) { }
+        roomChannel = null;
+      }
+      CURRENT_ROOM_CODE = null;
     }
 
     function onIncomingChallenge(payload) {
@@ -4578,9 +4601,18 @@
 
     function rejectIncomingChallenge() {
       if (!incomingChallenge) return;
+      const p = incomingChallenge;
       incomingChallenge = null;
       clearTimeout(incomingChallengeTimer);
       $('challengeOverlay').classList.add('hidden');
+      if (lobbyChannel && p && p.from) {
+        try {
+          lobbyChannel.send({
+            type: 'broadcast', event: 'challenge-rejected',
+            payload: { from: PLAYER_ID, fromName: MY_NAME, to: p.from }
+          });
+        } catch (e) { }
+      }
     }
 
     function acceptIncomingChallenge() {
@@ -4589,7 +4621,18 @@
       incomingChallenge = null;
       clearTimeout(incomingChallengeTimer);
       $('challengeOverlay').classList.add('hidden');
-      joinOnlineRoom(p.roomCode);
+
+      Sound.init(); Sound.click();
+      isDirectChallenge = true;
+      CURRENT_ROOM_CODE = p.roomCode;
+      IS_HOST = false;
+      CURRENT_MODE = 'online';
+      ROOM_PLAYER_COUNT = 2;
+
+      trackPresence('busy');
+      setLobbyStatus('busy');
+
+      bootRoomChannel(p.roomCode, false, 2);
     }
 
     $('btnAcceptChallenge').onclick = acceptIncomingChallenge;
@@ -4683,6 +4726,8 @@
 
         lastAppliedSeq = G.seq || 0;
         GAME_STARTED = true;
+        $('waitOverlay').classList.add('hidden');
+        $('challengeOverlay').classList.add('hidden');
         $('roomLobbyOverlay').classList.add('hidden');
         goToGame();
       });
@@ -4763,6 +4808,16 @@
       const hostMember = members.find(m => m.isHost) || members[0];
       const maxCount = (hostMember && hostMember.desiredCount) ? hostMember.desiredCount : ROOM_PLAYER_COUNT;
       ROOM_PLAYER_COUNT = maxCount;
+
+      // Auto-start for direct 1v1 challenge as soon as opponent joins
+      if (isDirectChallenge && IS_HOST && members.length >= 2 && !GAME_STARTED) {
+        clearTimeout(myChallengeTimer);
+        myChallengeTarget = null;
+        $('waitOverlay').classList.add('hidden');
+        startRoomMatch(false);
+        return;
+      }
+
       $('rlTitle').textContent = `Room Lobby (${maxCount} Players)`;
 
       const colors = getColorsForCount(maxCount);
@@ -5541,6 +5596,7 @@
       $('waitOverlay').classList.add('hidden');
       incomingChallenge = null;
       myChallengeTarget = null;
+      isDirectChallenge = false;
       if (incomingChallengeTimer) { clearTimeout(incomingChallengeTimer); incomingChallengeTimer = null; }
       if (myChallengeTimer) { clearTimeout(myChallengeTimer); myChallengeTimer = null; }
 
