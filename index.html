@@ -5909,6 +5909,8 @@
         const unlock = () => this.unlockAudio();
         document.addEventListener('click', unlock, { passive: true });
         document.addEventListener('touchstart', unlock, { passive: true });
+        document.addEventListener('touchend', unlock, { passive: true });
+        document.addEventListener('pointerdown', unlock, { passive: true });
       },
 
       unlockAudio() {
@@ -5916,7 +5918,7 @@
           this.audioContext.resume().catch(() => { });
         }
         Object.values(this.peerAudioElems).forEach(elem => {
-          if (elem && elem.paused && !elem.muted) {
+          if (elem && elem.srcObject && elem.paused && !elem.muted) {
             elem.play().catch(() => { });
           }
         });
@@ -5991,6 +5993,9 @@
             video: false
           });
           this.localStream = stream;
+          stream.getAudioTracks().forEach(track => {
+            track.enabled = this.isMicOn;
+          });
           this.setupAudioAnalyser(stream);
           return stream;
         } catch (err) {
@@ -6095,17 +6100,18 @@
           audioTrack.enabled = this.isMicOn;
         }
 
-        // Apply across all active peer connections
+        // Keep local audio track attached across all active peer connections
         for (const pc of Object.values(this.peerConnections)) {
+          if (!pc || pc.signalingState === 'closed' || pc.connectionState === 'closed') continue;
           const senders = pc.getSenders ? pc.getSenders() : [];
-          const audioSender = senders.find(s => s.track?.kind === 'audio' || !s.track);
-          if (audioSender && audioSender.replaceTrack) {
+          const audioSender = senders.find(s => s.track?.kind === 'audio' || (s.track === null && (!s.dtmf || s.kind === 'audio')));
+          if (audioSender && audioSender.replaceTrack && audioTrack) {
             try {
-              await audioSender.replaceTrack(this.isMicOn ? audioTrack : null);
+              await audioSender.replaceTrack(audioTrack);
             } catch (e) {
               console.warn('[VoiceChat] replaceTrack error:', e);
             }
-          } else if (audioTrack && this.isMicOn) {
+          } else if (audioTrack) {
             try { pc.addTrack(audioTrack, this.localStream); } catch (e) { }
           }
         }
@@ -6136,7 +6142,7 @@
         Object.entries(this.peerAudioElems).forEach(([peerId, audioElem]) => {
           const isPeerMuted = this.mutedPeers.has(peerId);
           audioElem.muted = !this.isSpeakerOn || isPeerMuted;
-          if (!audioElem.muted && audioElem.paused) {
+          if (!audioElem.muted && audioElem.paused && audioElem.srcObject) {
             try { audioElem.play().catch(() => { }); } catch (e) { }
           }
         });
@@ -6163,7 +6169,9 @@
           const audioElem = this.peerAudioElems[peerId];
           if (audioElem) {
             audioElem.muted = !this.isSpeakerOn;
-            if (!audioElem.muted) audioElem.play().catch(() => { });
+            if (!audioElem.muted && audioElem.paused && audioElem.srcObject) {
+              audioElem.play().catch(() => { });
+            }
           }
           if (btn) {
             btn.classList.remove('muted');
@@ -6247,7 +6255,13 @@
       },
 
       getOrCreatePeerConnection(peerId) {
-        if (this.peerConnections[peerId]) return this.peerConnections[peerId];
+        if (this.peerConnections[peerId]) {
+          const existingPc = this.peerConnections[peerId];
+          if (existingPc.signalingState !== 'closed' && existingPc.connectionState !== 'closed') {
+            return existingPc;
+          }
+          this.closePeer(peerId);
+        }
 
         const pc = new RTCPeerConnection({
           iceServers: this.iceServers,
@@ -6269,7 +6283,7 @@
               roomChannel.send({
                 type: 'broadcast',
                 event: 'voice-signal',
-                payload: { from: PLAYER_ID, to: peerId, type: 'candidate', candidate: event.candidate }
+                payload: { from: PLAYER_ID, to: peerId, type: 'candidate', candidate: event.candidate.toJSON ? event.candidate.toJSON() : event.candidate }
               });
             } catch (e) { }
           }
@@ -6282,6 +6296,9 @@
             audioElem = document.createElement('audio');
             audioElem.autoplay = true;
             audioElem.playsInline = true;
+            audioElem.setAttribute('playsinline', 'true');
+            audioElem.setAttribute('webkit-playsinline', 'true');
+            audioElem.setAttribute('autoplay', 'true');
             audioElem.volume = 1.0;
             audioElem.style.display = 'none';
             document.body.appendChild(audioElem);
@@ -6290,9 +6307,21 @@
           const stream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
           audioElem.srcObject = stream;
           audioElem.muted = !this.isSpeakerOn || this.mutedPeers.has(peerId);
-          audioElem.play().catch(err => {
-            console.warn('[VoiceChat] Autoplay restricted until interaction:', err);
-          });
+          const playPromise = audioElem.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(err => {
+              console.warn('[VoiceChat] Autoplay restricted on mobile, unlocking on next user tap:', err);
+            });
+          }
+        };
+
+        pc.oniceconnectionstatechange = () => {
+          console.log('[VoiceChat] ICE state with', peerId, ':', pc.iceConnectionState);
+          if (pc.iceConnectionState === 'failed') {
+            try { pc.restartIce(); } catch (e) { }
+          } else if (pc.iceConnectionState === 'closed') {
+            this.closePeer(peerId);
+          }
         };
 
         pc.onconnectionstatechange = () => {
@@ -6312,6 +6341,8 @@
         if (!isOfferer) return;
 
         const pc = this.getOrCreatePeerConnection(peerId);
+        if (pc.signalingState !== 'stable') return;
+
         try {
           const offer = await pc.createOffer({ offerToReceiveAudio: true });
           await pc.setLocalDescription(offer);
@@ -6331,16 +6362,29 @@
         if (!payload || payload.to !== PLAYER_ID || !payload.from) return;
         const peerId = payload.from;
 
+        if (!this.peerColors[peerId] && G && G.activeColors) {
+          for (const c of G.activeColors) {
+            if (G.players[c]?.id === peerId) {
+              this.peerColors[peerId] = c;
+              this.colorToPeerId[c] = peerId;
+              break;
+            }
+          }
+        }
+
         if (payload.type === 'offer' && payload.sdp) {
           const pc = this.getOrCreatePeerConnection(peerId);
           try {
             if (pc.signalingState !== 'stable') {
               try { await pc.setLocalDescription({ type: 'rollback' }); } catch (e) { }
             }
-            await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
-            if (this.pendingCandidates[peerId]) {
+            const desc = (typeof payload.sdp === 'object' && payload.sdp.sdp) ? payload.sdp : { type: payload.type, sdp: payload.sdp };
+            await pc.setRemoteDescription(new RTCSessionDescription(desc));
+            if (this.pendingCandidates[peerId] && this.pendingCandidates[peerId].length > 0) {
               for (const cand of this.pendingCandidates[peerId]) {
-                try { await pc.addIceCandidate(new RTCIceCandidate(cand)); } catch (e) { }
+                try {
+                  await pc.addIceCandidate(cand.candidate !== undefined ? cand : new RTCIceCandidate(cand));
+                } catch (e) { }
               }
               delete this.pendingCandidates[peerId];
             }
@@ -6360,12 +6404,17 @@
           const pc = this.peerConnections[peerId];
           if (pc) {
             try {
-              await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp));
-              if (this.pendingCandidates[peerId]) {
-                for (const cand of this.pendingCandidates[peerId]) {
-                  try { await pc.addIceCandidate(new RTCIceCandidate(cand)); } catch (e) { }
+              if (pc.signalingState === 'have-local-offer') {
+                const desc = (typeof payload.sdp === 'object' && payload.sdp.sdp) ? payload.sdp : { type: payload.type, sdp: payload.sdp };
+                await pc.setRemoteDescription(new RTCSessionDescription(desc));
+                if (this.pendingCandidates[peerId] && this.pendingCandidates[peerId].length > 0) {
+                  for (const cand of this.pendingCandidates[peerId]) {
+                    try {
+                      await pc.addIceCandidate(cand.candidate !== undefined ? cand : new RTCIceCandidate(cand));
+                    } catch (e) { }
+                  }
+                  delete this.pendingCandidates[peerId];
                 }
-                delete this.pendingCandidates[peerId];
               }
             } catch (err) {
               console.warn('[VoiceChat] Handle answer error:', err);
@@ -6375,7 +6424,8 @@
           const pc = this.peerConnections[peerId];
           if (pc && pc.remoteDescription && pc.remoteDescription.type) {
             try {
-              await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
+              const cand = payload.candidate;
+              await pc.addIceCandidate(cand.candidate !== undefined ? cand : new RTCIceCandidate(cand));
             } catch (e) { }
           } else {
             if (!this.pendingCandidates[peerId]) this.pendingCandidates[peerId] = [];
@@ -6396,14 +6446,25 @@
       closePeer(peerId) {
         const pc = this.peerConnections[peerId];
         if (pc) {
-          try { pc.close(); } catch (e) { }
+          try {
+            pc.onicecandidate = null;
+            pc.ontrack = null;
+            pc.oniceconnectionstatechange = null;
+            pc.onconnectionstatechange = null;
+            pc.close();
+          } catch (e) { }
           delete this.peerConnections[peerId];
         }
         const audioElem = this.peerAudioElems[peerId];
         if (audioElem) {
-          try { audioElem.pause(); audioElem.srcObject = null; audioElem.remove(); } catch (e) { }
+          try {
+            audioElem.pause();
+            audioElem.srcObject = null;
+            audioElem.remove();
+          } catch (e) { }
           delete this.peerAudioElems[peerId];
         }
+        delete this.pendingCandidates[peerId];
         const color = this.peerColors[peerId];
         if (color) {
           const avatar = $(`avatar_${color}`);
